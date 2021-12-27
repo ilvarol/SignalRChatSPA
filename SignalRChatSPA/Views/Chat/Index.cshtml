@@ -1,0 +1,131 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <title>SignalRChatSPA</title>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row justify-content-center mb-1">
+            <div class="col-4">
+                <br />
+                <div id="login" class="row">
+                    <div class="col pe-0">
+                        <input id="user" type="text" class="form-control" placeholder="Nickname">
+                    </div>
+                    <div class="col ps-0 ms-1">
+                        <button id="loginButton" type="submit" class="btn btn-primary">Giriş yap</button>
+                    </div>
+                </div>
+                <div id="loggedin" class="row" style="visibility:hidden">
+                    <h4 id="welcoming"></h4>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-7 pe-0">
+                <input id="message" type="text" class="form-control" placeholder="Yollamak için enter'a basın">
+                <br />
+                <p id="messages">
+                </p>
+            </div>
+            <div id="rooms" class="col-3 ps-0 ms-1">
+                <ul class="list-group">
+                    <li class="list-group-item"><button id="general" type="button" class="btn btn-primary" disabled>Katıl</button> Genel</li>
+                    <li class="list-group-item"><button id="art" type="button" class="btn btn-primary" disabled>Katıl</button> Sanat</li>
+                    <li class="list-group-item"><button id="politics" type="button" class="btn btn-primary" disabled>Katıl</button> Siyaset</li>
+                    <li class="list-group-item"><button id="sport" type="button" class="btn btn-primary" disabled>Katıl</button> Spor</li>
+                    <li class="list-group-item"><button id="cinema" type="button" class="btn btn-primary" disabled>Katıl</button> Sinema</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <script src="~/js/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        var connection = new signalR.HubConnectionBuilder().withUrl("/chathub").build();
+
+        document.getElementById("message").disabled = true;
+
+        connection.on("receiveMessage", function (user, time, message) {
+            var content = `${user} (${time}): ${message}<br />` + document.getElementById("messages").innerHTML
+            document.getElementById("messages").innerHTML = content;
+        });
+
+        connection.on("history", function (history) {
+            document.getElementById("messages").innerHTML = history;
+        });
+
+        document.getElementById("loginButton").addEventListener("click", function (event) {
+            connection.start().then(function () {
+                var user = document.getElementById("user").value;
+                connection.invoke("login", user).catch(function (err) {
+                    return console.error(err.toString());
+                });
+                document.getElementById("login").style.display = 'none';
+                document.getElementById("loggedin").style.visibility = 'visible'
+                document.getElementById("welcoming").innerHTML = "Hoşgeldin, " + user;
+                document.getElementById("general").disabled = false;
+                document.getElementById("art").disabled = false;
+                document.getElementById("politics").disabled = false;
+                document.getElementById("sport").disabled = false;
+                document.getElementById("cinema").disabled = false;
+            }).catch(function (err) {
+                return console.error(err.toString());
+            });
+        });
+
+        document.getElementById("message").addEventListener("keypress", function (event) {
+            if (event.key === 'Enter') {
+                var message = document.getElementById("message").value;
+                connection.invoke("SendMessageToGroupAsync", groupName, message).catch(function (err) {
+                    return console.error(err.toString());
+                });
+            }
+        });
+        var groupName = "";
+        document.getElementById("general").addEventListener("click", function (event) {
+            connection.invoke("AddClientToGroup", "general").catch(function (err) {
+                return console.error(err.toString());
+            });
+
+            document.getElementById("message").disabled = false;
+            groupName = "general";
+        });
+
+        document.getElementById("art").addEventListener("click", function (event) {
+            connection.invoke("AddClientToGroup", "art").catch(function (err) {
+                return console.error(err.toString());
+            });
+            document.getElementById("message").disabled = false;
+            groupName = "art";
+        });
+
+        document.getElementById("politics").addEventListener("click", function (event) {
+            connection.invoke("AddClientToGroup", "politics").catch(function (err) {
+                return console.error(err.toString());
+            });
+            document.getElementById("message").disabled = false;
+            groupName = "politics";
+        });
+
+        document.getElementById("sport").addEventListener("click", function (event) {
+            connection.invoke("AddClientToGroup", "sport").catch(function (err) {
+                return console.error(err.toString());
+            });
+            document.getElementById("message").disabled = false;
+            groupName = "sport";
+        });
+
+        document.getElementById("cinema").addEventListener("click", function (event) {
+            connection.invoke("AddClientToGroup", "cinema").catch(function (err) {
+                return console.error(err.toString());
+            });
+            document.getElementById("message").disabled = false;
+            groupName = "cinema";
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+</body>
+</html>
